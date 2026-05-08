@@ -180,7 +180,20 @@ ${expenseEntries}
       </div>
 
       {/* P&L Tab */}
-      {tab === "pnl" && (
+      {tab === "pnl" && (() => {
+        const BRANCH_COLORS: Record<string, string> = { "College Expense": "#0F766E", "Infrastructure": "#7C3AED", "Hostel Expense": "#D97706" };
+        const BRANCH_BG: Record<string, string> = { "College Expense": "#F0FDFA", "Infrastructure": "#F5F3FF", "Hostel Expense": "#FFFBEB" };
+        const branchTotals = ["College Expense", "Infrastructure", "Hostel Expense"].map(b => ({
+          name: b,
+          total: filteredExpenses.filter(e => e.accountBranch === b).reduce((s, e) => s + e.amount, 0),
+        }));
+        const incomeHeadTotals = [
+          { name: "Tuition Fees", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Tuition")).reduce((s, r) => s + r.heads.filter(h => h.head === "Tuition").reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Hostel Fees", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Hostel")).reduce((s, r) => s + r.heads.filter(h => h.head === "Hostel").reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Exam & Lab", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Exam" || h.head === "Lab")).reduce((s, r) => s + r.heads.filter(h => h.head === "Exam" || h.head === "Lab").reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Other Fees", total: filteredReceipts.filter(r => r.heads.some(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head))).reduce((s, r) => s + r.heads.filter(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head)).reduce((a, h) => a + h.amount, 0), 0) },
+        ];
+        return (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             {[
@@ -194,9 +207,63 @@ ${expenseEntries}
               </div>
             ))}
           </div>
+
+          {/* Branch-wise Expense Breakdown */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
+              <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Expense by Branch</h3>
+              <div className="space-y-3">
+                {branchTotals.map(b => {
+                  const pct = totalExpenses > 0 ? Math.round((b.total / totalExpenses) * 100) : 0;
+                  return (
+                    <div key={b.name}>
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRANCH_COLORS[b.name] }} />
+                          <span className="text-sm font-medium" style={{ color: "#0F172A" }}>{b.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{formatINR(b.total)}</span>
+                          <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>{pct}%</span>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full" style={{ backgroundColor: "#f1f5f9" }}>
+                        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: BRANCH_COLORS[b.name] }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Income head breakdown */}
+            <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
+              <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Income by Head</h3>
+              <div className="space-y-3">
+                {incomeHeadTotals.filter(h => h.total > 0).map(h => {
+                  const pct = totalIncome > 0 ? Math.round((h.total / totalIncome) * 100) : 0;
+                  return (
+                    <div key={h.name}>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-sm font-medium" style={{ color: "#0F172A" }}>{h.name}</span>
+                        <div className="text-right">
+                          <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{formatINR(h.total)}</span>
+                          <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>{pct}%</span>
+                        </div>
+                      </div>
+                      <div className="h-2 rounded-full" style={{ backgroundColor: "#f1f5f9" }}>
+                        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#0F766E" }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
             <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Monthly P&L</h3>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <BarChart data={monthlyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -209,7 +276,8 @@ ${expenseEntries}
             </ResponsiveContainer>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* Cash Flow */}
       {tab === "cashflow" && (

@@ -89,6 +89,9 @@ export interface Expense {
   submittedBy: string;
   approvedBy?: string;
   remarks?: string;
+  accountBranch?: string;   // e.g. "College Expense"
+  accountSubHead?: string;  // e.g. "College Salary"
+  accountLeaf?: string;     // e.g. "Teacher Salary" (undefined when subHead is leaf)
 }
 
 export interface Staff {
