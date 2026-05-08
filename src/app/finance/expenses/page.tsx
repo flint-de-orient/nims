@@ -4,7 +4,7 @@ import { useNIMSStore } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { CHART_OF_ACCOUNTS, APPROVAL_THRESHOLDS } from "@/lib/chart-of-accounts";
-import { Plus, Building2, CheckCircle, XCircle, Clock, Banknote, ShieldCheck, ShieldAlert, Users } from "lucide-react";
+import { Plus, Building2, CheckCircle, XCircle, Clock, Banknote, ShieldCheck, ShieldAlert, Users, Wallet } from "lucide-react";
 import type { Expense, ExpenseStatus } from "@/lib/types";
 
 type TabType = "vendors" | "expenses" | "pending";
@@ -20,11 +20,16 @@ export default function ExpensesPage() {
   const [branchFilter, setBranchFilter] = useState<string>("all");
 
   // Vendor form
-  const [vForm, setVForm] = useState({ name: "", gstin: "", address: "", contact: "", email: "", category: "Supplier", paymentTerms: "Net 30" });
+  const [vForm, setVForm] = useState({
+    name: "", gstin: "", address: "", contact: "", email: "",
+    category: "Supplier", paymentTerms: "Net 30",
+    accountHeads: [] as string[],
+  });
 
   // Expense form — COA-driven
   const [eForm, setEForm] = useState({
-    vendorId: vendors[0]?.id || "",
+    vendorId: "",
+    isDirectPayment: false,
     accountBranch: "",
     accountSubHead: "",
     accountLeaf: "",
@@ -43,6 +48,14 @@ export default function ExpensesPage() {
     () => selectedBranch?.subHeads.find(s => s.name === eForm.accountSubHead),
     [selectedBranch, eForm.accountSubHead]
   );
+
+  const filteredVendors = useMemo(() => {
+    if (!eForm.accountSubHead) return [];
+    return vendors.filter(v => v.accountHeads.includes(eForm.accountSubHead));
+  }, [vendors, eForm.accountSubHead]);
+
+  const autoDirectPayment = eForm.accountSubHead !== "" && filteredVendors.length === 0;
+  const effectiveDirectPayment = autoDirectPayment || eForm.isDirectPayment;
 
   const gstCalc = useMemo(() => {
     const amount = parseFloat(eForm.amount) || 0;
@@ -68,11 +81,20 @@ export default function ExpensesPage() {
     [expenses, statusFilter, branchFilter]
   );
 
+  const toggleAccountHead = (name: string) => {
+    setVForm(p => ({
+      ...p,
+      accountHeads: p.accountHeads.includes(name)
+        ? p.accountHeads.filter(h => h !== name)
+        : [...p.accountHeads, name],
+    }));
+  };
+
   const handleAddVendor = () => {
     if (!vForm.name) { toast({ title: "Vendor name required", variant: "destructive" }); return; }
     addVendor({ id: `v${Date.now()}`, ...vForm });
     setShowVendorModal(false);
-    setVForm({ name: "", gstin: "", address: "", contact: "", email: "", category: "Supplier", paymentTerms: "Net 30" });
+    setVForm({ name: "", gstin: "", address: "", contact: "", email: "", category: "Supplier", paymentTerms: "Net 30", accountHeads: [] });
     toast({ title: "Vendor added", variant: "success" });
   };
 
@@ -80,12 +102,15 @@ export default function ExpensesPage() {
     const amount = parseFloat(eForm.amount);
     if (isNaN(amount) || amount <= 0) { toast({ title: "Valid amount required", variant: "destructive" }); return; }
     if (!eForm.accountBranch || !eForm.accountSubHead) { toast({ title: "Select account head", variant: "destructive" }); return; }
+    if (!effectiveDirectPayment && !eForm.vendorId) { toast({ title: "Select a vendor or switch to Direct Payment", variant: "destructive" }); return; }
     if (!eForm.description) { toast({ title: "Description required", variant: "destructive" }); return; }
 
     const autoApprove = amount < APPROVAL_THRESHOLDS.auto;
     addExpense({
       id: `e${Date.now()}`,
-      vendorId: eForm.vendorId,
+      ...(effectiveDirectPayment
+        ? { isDirectPayment: true }
+        : { vendorId: eForm.vendorId }),
       category: eForm.accountSubHead,
       accountBranch: eForm.accountBranch,
       accountSubHead: eForm.accountSubHead,
@@ -102,7 +127,7 @@ export default function ExpensesPage() {
       ...(autoApprove ? { approvedBy: "Auto-approved (< ₹5,000)" } : {}),
     });
     setShowExpenseModal(false);
-    setEForm(p => ({ ...p, accountBranch: "", accountSubHead: "", accountLeaf: "", amount: "", invoiceNumber: "", description: "" }));
+    setEForm(p => ({ ...p, accountBranch: "", accountSubHead: "", accountLeaf: "", amount: "", invoiceNumber: "", description: "", isDirectPayment: false, vendorId: "" }));
     toast({
       title: autoApprove ? "Expense posted (auto-approved)" : "Submitted for approval",
       description: autoApprove ? `${eForm.accountBranch} / ${eForm.accountSubHead}` : "Pending Principal approval",
@@ -190,7 +215,7 @@ export default function ExpensesPage() {
                 <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Vendor</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>GSTIN</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Category</th>
-                <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Contact</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Linked Account Heads</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Terms</th>
               </tr>
             </thead>
@@ -204,7 +229,7 @@ export default function ExpensesPage() {
                       </div>
                       <div>
                         <div className="font-medium" style={{ color: "#0F172A" }}>{v.name}</div>
-                        <div className="text-xs truncate max-w-48" style={{ color: "#475569" }}>{v.address}</div>
+                        <div className="text-xs truncate max-w-40" style={{ color: "#475569" }}>{v.contact}</div>
                       </div>
                     </div>
                   </td>
@@ -212,7 +237,22 @@ export default function ExpensesPage() {
                   <td className="px-5 py-3">
                     <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#f1f5f9", color: "#475569" }}>{v.category}</span>
                   </td>
-                  <td className="px-5 py-3 text-xs" style={{ color: "#475569" }}>{v.contact}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(v.accountHeads ?? []).slice(0, 3).map(h => (
+                        <span key={h} className="text-xs px-2 py-0.5 rounded-full font-medium"
+                          style={{ backgroundColor: "#F0FDFA", color: "#0F766E" }}>{h}</span>
+                      ))}
+                      {(v.accountHeads ?? []).length > 3 && (
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: "#f1f5f9", color: "#94a3b8" }}>
+                          +{(v.accountHeads ?? []).length - 3}
+                        </span>
+                      )}
+                      {(v.accountHeads ?? []).length === 0 && (
+                        <span className="text-xs" style={{ color: "#94a3b8" }}>—</span>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-5 py-3 text-xs" style={{ color: "#475569" }}>{v.paymentTerms}</td>
                 </tr>
               ))}
@@ -263,6 +303,7 @@ export default function ExpensesPage() {
               <tbody>
                 {filteredExpenses.map(e => {
                   const vendor = vendors.find(v => v.id === e.vendorId);
+                  const isDirect = e.isDirectPayment || (!e.vendorId);
                   const branchColor = e.accountBranch ? BRANCH_COLORS[e.accountBranch] : "#94a3b8";
                   return (
                     <tr key={e.id} className="border-t hover:bg-gray-50 transition-colors" style={{ borderColor: "#f1f5f9" }}>
@@ -283,8 +324,20 @@ export default function ExpensesPage() {
                         )}
                       </td>
                       <td className="px-5 py-3">
-                        <div className="font-medium text-sm" style={{ color: "#0F172A" }}>{vendor?.name || "—"}</div>
-                        <div className="text-xs truncate max-w-48" style={{ color: "#475569" }}>{e.description}</div>
+                        {isDirect ? (
+                          <div>
+                            <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+                              style={{ backgroundColor: "#F0F9FF", color: "#0284c7" }}>
+                              <Wallet size={10} /> Direct Payment
+                            </span>
+                            <div className="text-xs truncate max-w-48 mt-0.5" style={{ color: "#475569" }}>{e.description}</div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="font-medium text-sm" style={{ color: "#0F172A" }}>{vendor?.name || "—"}</div>
+                            <div className="text-xs truncate max-w-48" style={{ color: "#475569" }}>{e.description}</div>
+                          </div>
+                        )}
                       </td>
                       <td className="px-5 py-3 font-mono text-xs" style={{ color: "#475569" }}>{e.invoiceNumber}</td>
                       <td className="px-5 py-3 text-right">
@@ -340,6 +393,7 @@ export default function ExpensesPage() {
             </div>
           ) : pendingExpenses.map(e => {
             const vendor = vendors.find(v => v.id === e.vendorId);
+            const isDirect = e.isDirectPayment || (!e.vendorId);
             const branchColor = e.accountBranch ? BRANCH_COLORS[e.accountBranch] : "#94a3b8";
             const needsCommittee = e.amount > APPROVAL_THRESHOLDS.principal;
             return (
@@ -351,7 +405,13 @@ export default function ExpensesPage() {
                         <Clock size={16} style={{ color: "#D97706" }} />
                       </div>
                       <div>
-                        <div className="font-semibold" style={{ color: "#0F172A" }}>{vendor?.name}</div>
+                        {isDirect ? (
+                          <div className="inline-flex items-center gap-1.5 font-semibold" style={{ color: "#0284c7" }}>
+                            <Wallet size={14} /> Direct Payment
+                          </div>
+                        ) : (
+                          <div className="font-semibold" style={{ color: "#0F172A" }}>{vendor?.name || "—"}</div>
+                        )}
                         <div className="text-xs" style={{ color: "#475569" }}>{formatDate(e.date)} · {e.invoiceNumber}</div>
                       </div>
                       {needsCommittee && (
@@ -403,7 +463,7 @@ export default function ExpensesPage() {
       {/* Add Vendor Modal */}
       {showVendorModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[480px] max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[520px] max-h-[90vh] overflow-y-auto">
             <h3 className="font-serif font-bold text-lg mb-4" style={{ color: "#0F172A" }}>Add Vendor</h3>
             <div className="space-y-4">
               {[
@@ -416,10 +476,43 @@ export default function ExpensesPage() {
               ].map(f => (
                 <div key={f.key}>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "#0F172A" }}>{f.label}</label>
-                  <input value={(vForm as Record<string, string>)[f.key]} onChange={e => setVForm(p => ({ ...p, [f.key]: e.target.value }))}
+                  <input value={(vForm as unknown as Record<string, string>)[f.key]} onChange={e => setVForm(p => ({ ...p, [f.key]: e.target.value }))}
                     placeholder={f.placeholder} className="w-full px-3 py-2 rounded-lg border text-sm outline-none" style={{ borderColor: "#E2E8F0" }} />
                 </div>
               ))}
+
+              {/* Account Heads */}
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: "#0F172A" }}>
+                  Linked Account Heads
+                  {vForm.accountHeads.length > 0 && (
+                    <span className="ml-2 text-xs font-normal px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#F0FDFA", color: "#0F766E" }}>
+                      {vForm.accountHeads.length} selected
+                    </span>
+                  )}
+                </label>
+                <div className="border rounded-xl overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
+                  {CHART_OF_ACCOUNTS.map(branch => (
+                    <div key={branch.id}>
+                      <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wide"
+                        style={{ backgroundColor: branch.color + "18", color: branch.color }}>
+                        {branch.name}
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0 px-3 py-2">
+                        {branch.subHeads.map(sh => (
+                          <label key={sh.id} className="flex items-center gap-2 py-1 cursor-pointer group">
+                            <input type="checkbox"
+                              checked={vForm.accountHeads.includes(sh.name)}
+                              onChange={() => toggleAccountHead(sh.name)}
+                              className="rounded accent-teal-600 flex-shrink-0" />
+                            <span className="text-xs group-hover:text-teal-700 transition-colors" style={{ color: "#475569" }}>{sh.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowVendorModal(false)}
@@ -436,7 +529,7 @@ export default function ExpensesPage() {
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-[560px] max-h-[92vh] overflow-y-auto">
             <h3 className="font-serif font-bold text-lg mb-1" style={{ color: "#0F172A" }}>New Expense</h3>
-            <p className="text-xs mb-5" style={{ color: "#475569" }}>Post against Nawjan's chart of accounts</p>
+            <p className="text-xs mb-5" style={{ color: "#475569" }}>Post against Nawjan&apos;s chart of accounts</p>
 
             <div className="space-y-4">
               {/* Step 1: Account Head (3-level COA) */}
@@ -447,7 +540,7 @@ export default function ExpensesPage() {
                   <div>
                     <label className="block text-xs font-medium mb-1" style={{ color: "#0F172A" }}>Branch</label>
                     <select value={eForm.accountBranch}
-                      onChange={e => setEForm(p => ({ ...p, accountBranch: e.target.value, accountSubHead: "", accountLeaf: "" }))}
+                      onChange={e => setEForm(p => ({ ...p, accountBranch: e.target.value, accountSubHead: "", accountLeaf: "", isDirectPayment: false, vendorId: "" }))}
                       className="w-full px-2.5 py-2 rounded-lg border text-sm outline-none bg-white" style={{ borderColor: "#E2E8F0" }}>
                       <option value="">— Select —</option>
                       {CHART_OF_ACCOUNTS.map(b => <option key={b.id} value={b.name}>{b.name}</option>)}
@@ -457,7 +550,11 @@ export default function ExpensesPage() {
                   <div>
                     <label className="block text-xs font-medium mb-1" style={{ color: "#0F172A" }}>Sub-head</label>
                     <select value={eForm.accountSubHead}
-                      onChange={e => setEForm(p => ({ ...p, accountSubHead: e.target.value, accountLeaf: "" }))}
+                      onChange={e => {
+                        const subHead = e.target.value;
+                        const matched = vendors.filter(v => v.accountHeads.includes(subHead));
+                        setEForm(p => ({ ...p, accountSubHead: subHead, accountLeaf: "", isDirectPayment: false, vendorId: matched[0]?.id || "" }));
+                      }}
                       disabled={!selectedBranch}
                       className="w-full px-2.5 py-2 rounded-lg border text-sm outline-none bg-white disabled:opacity-50" style={{ borderColor: "#E2E8F0" }}>
                       <option value="">— Select —</option>
@@ -491,10 +588,42 @@ export default function ExpensesPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "#0F172A" }}>Vendor</label>
-                  <select value={eForm.vendorId} onChange={e => setEForm(p => ({ ...p, vendorId: e.target.value }))}
-                    className="w-full px-3 py-2 rounded-lg border text-sm outline-none bg-white" style={{ borderColor: "#E2E8F0" }}>
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                  </select>
+                  {!eForm.accountSubHead ? (
+                    <div className="w-full px-3 py-2.5 rounded-lg border text-sm text-gray-400 bg-gray-50" style={{ borderColor: "#E2E8F0" }}>
+                      Select account head first
+                    </div>
+                  ) : effectiveDirectPayment ? (
+                    <div className="p-3 rounded-lg border"
+                      style={{
+                        borderColor: autoDirectPayment ? "#E2E8F0" : "#0284c7",
+                        backgroundColor: autoDirectPayment ? "#f8fafc" : "#F0F9FF",
+                      }}>
+                      <div className="flex items-center gap-2">
+                        <Wallet size={14} style={{ color: autoDirectPayment ? "#64748b" : "#0284c7" }} />
+                        <span className="text-sm font-medium" style={{ color: autoDirectPayment ? "#475569" : "#0284c7" }}>Direct Payment</span>
+                      </div>
+                      {autoDirectPayment ? (
+                        <p className="text-xs mt-1" style={{ color: "#94a3b8" }}>No vendor registered for this account head</p>
+                      ) : (
+                        <button className="text-xs mt-1 underline hover:no-underline" style={{ color: "#0284c7" }}
+                          onClick={() => setEForm(p => ({ ...p, isDirectPayment: false, vendorId: filteredVendors[0]?.id || "" }))}>
+                          Use vendor instead
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <select value={eForm.vendorId} onChange={e => setEForm(p => ({ ...p, vendorId: e.target.value }))}
+                        className="w-full px-3 py-2 rounded-lg border text-sm outline-none bg-white" style={{ borderColor: "#E2E8F0" }}>
+                        <option value="">— Select vendor —</option>
+                        {filteredVendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                      </select>
+                      <button className="flex items-center gap-1 text-xs mt-1.5 hover:underline" style={{ color: "#94a3b8" }}
+                        onClick={() => setEForm(p => ({ ...p, isDirectPayment: true, vendorId: "" }))}>
+                        <Wallet size={10} /> Switch to Direct Payment
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "#0F172A" }}>Date</label>
@@ -510,7 +639,7 @@ export default function ExpensesPage() {
                   placeholder="Brief description of the expense" className="w-full px-3 py-2 rounded-lg border text-sm outline-none" style={{ borderColor: "#E2E8F0" }} />
               </div>
 
-              {/* Amount + approval indicator */}
+              {/* Amount + invoice */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium mb-1.5" style={{ color: "#0F172A" }}>Amount (₹)</label>

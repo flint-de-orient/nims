@@ -84,41 +84,33 @@ export const mockExpenses: Expense[] = [
 
   // ── NEW ENTRIES e041–e050 ──────────────────────────────────────────────────
 
-  // e041 — Infrastructure / Building / Civil Work
-  // Building/construction GST: cgst = round(185000 * 0.09) = 16650, sgst = 16650
-  { id: "e041", vendorId: "v010", category: "Construction", amount: 185000, cgst: 16650, sgst: 16650, igst: 0, invoiceNumber: "CONST/2024/1025", invoiceFile: "const_1025.pdf", date: "2024-10-25", description: "Classroom extension - ground floor civil work", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Civil Work" },
+  // e041 — Infrastructure / Building / Civil Work — vendor: Rajesh Construction
+  { id: "e041", vendorId: "v012", category: "Construction", amount: 185000, cgst: 16650, sgst: 16650, igst: 0, invoiceNumber: "CONST/2024/1025", invoiceFile: "const_1025.pdf", date: "2024-10-25", description: "Classroom extension - ground floor civil work", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Civil Work" },
 
-  // e042 — College Expense / College Salary / Teacher Salary
-  // Salary: cgst=0, sgst=0, igst=0
-  { id: "e042", vendorId: "v010", category: "Salary", amount: 240000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/OCT/2024/FAC", date: "2024-10-31", description: "Faculty salary disbursement - October 2024", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Salary", accountLeaf: "Teacher Salary" },
+  // e042 — College Expense / College Salary / Teacher Salary — DIRECT PAYMENT (no vendor)
+  { id: "e042", isDirectPayment: true, category: "Salary", amount: 240000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/OCT/2024/FAC", date: "2024-10-31", description: "Faculty salary disbursement - October 2024", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Salary", accountLeaf: "Teacher Salary" },
 
-  // e043 — College Expense / College Transport / Bus
-  // Standard cgst+sgst 9%+9%: round(18500 * 0.09) = 1665
-  { id: "e043", vendorId: "v003", category: "Transport", amount: 18500, cgst: 1665, sgst: 1665, igst: 0, invoiceNumber: "TRN/2024/0311", invoiceFile: "trn_0311.pdf", date: "2024-11-10", description: "Bus fuel and maintenance - Q2", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Transport", accountLeaf: "Bus" },
+  // e043 — College Expense / College Transport / Bus — vendor: Eastern Transport
+  { id: "e043", vendorId: "v014", category: "Transport", amount: 18500, cgst: 1665, sgst: 1665, igst: 0, invoiceNumber: "TRN/2024/0311", invoiceFile: "trn_0311.pdf", date: "2024-11-10", description: "Bus fuel and maintenance - Q2", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Transport", accountLeaf: "Bus" },
 
-  // e044 — College Expense / Advertisement / Online Advertisement
-  // Standard: round(12000 * 0.09) = 1080
-  { id: "e044", vendorId: "v009", category: "Advertisement", amount: 12000, cgst: 1080, sgst: 1080, igst: 0, invoiceNumber: "ADV/2024/0118", invoiceFile: "adv_0118.pdf", date: "2024-11-18", description: "Facebook & Instagram ads - admission campaign", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "Advertisement", accountLeaf: "Online Advertisement" },
+  // e044 — College Expense / Advertisement / Online Advertisement — vendor: Digital Spark
+  { id: "e044", vendorId: "v013", category: "Advertisement", amount: 12000, cgst: 1080, sgst: 1080, igst: 0, invoiceNumber: "ADV/2024/0118", invoiceFile: "adv_0118.pdf", date: "2024-11-18", description: "Facebook & Instagram ads - admission campaign", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "Advertisement", accountLeaf: "Online Advertisement" },
 
-  // e045 — Infrastructure / Building / Electric Work
-  // Building GST: round(45000 * 0.09) = 4050
-  { id: "e045", vendorId: "v007", category: "Construction", amount: 45000, cgst: 4050, sgst: 4050, igst: 0, invoiceNumber: "ELEC/2025/0120", invoiceFile: "elec_0120.pdf", date: "2025-01-20", description: "New electrical wiring - first floor", status: "Approved", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Electric Work" },
+  // e045 — Infrastructure / Building / Electric Work — vendor: Rajesh Construction
+  { id: "e045", vendorId: "v012", category: "Construction", amount: 45000, cgst: 4050, sgst: 4050, igst: 0, invoiceNumber: "ELEC/2025/0120", invoiceFile: "elec_0120.pdf", date: "2025-01-20", description: "New electrical wiring - first floor", status: "Approved", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Electric Work" },
 
-  // e046 — College Expense / College Salary / Teacher Salary
-  { id: "e046", vendorId: "v010", category: "Salary", amount: 240000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/JAN/2025/FAC", date: "2025-01-31", description: "Faculty salary disbursement - January 2025", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Salary", accountLeaf: "Teacher Salary" },
+  // e046 — College Expense / College Salary / Teacher Salary — DIRECT PAYMENT
+  { id: "e046", isDirectPayment: true, category: "Salary", amount: 240000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/JAN/2025/FAC", date: "2025-01-31", description: "Faculty salary disbursement - January 2025", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "College Salary", accountLeaf: "Teacher Salary" },
 
-  // e047 — Hostel Expense / Salary
-  { id: "e047", vendorId: "v001", category: "Salary", amount: 65000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/FEB/2025/HST", date: "2025-02-28", description: "Hostel warden and cook salary - February 2025", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Hostel Expense", accountSubHead: "Salary" },
+  // e047 — Hostel Expense / Salary — DIRECT PAYMENT
+  { id: "e047", isDirectPayment: true, category: "Salary", amount: 65000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "SAL/FEB/2025/HST", date: "2025-02-28", description: "Hostel warden and cook salary - February 2025", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "Hostel Expense", accountSubHead: "Salary" },
 
-  // e048 — College Expense / Book Account / Anand Books Kolkata
-  // Standard: round(22500 * 0.09) = 2025
-  { id: "e048", vendorId: "v003", category: "Books", amount: 22500, cgst: 2025, sgst: 2025, igst: 0, invoiceNumber: "ANAND/2025/0310", invoiceFile: "anand_0310.pdf", date: "2025-03-10", description: "Nursing textbooks for new GNM batch", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "Book Account", accountLeaf: "Anand Books Kolkata" },
+  // e048 — College Expense / Book Account / Anand Books Kolkata — vendor: Anand Books
+  { id: "e048", vendorId: "v011", category: "Books", amount: 22500, cgst: 2025, sgst: 2025, igst: 0, invoiceNumber: "ANAND/2025/0310", invoiceFile: "anand_0310.pdf", date: "2025-03-10", description: "Nursing textbooks for new GNM batch", status: "Paid", submittedBy: "Bikash Sharma", approvedBy: "Dr. Pratima Ghosh", accountBranch: "College Expense", accountSubHead: "Book Account", accountLeaf: "Anand Books Kolkata" },
 
-  // e049 — College Expense / College Paperwork / WBNC & INC
-  // Standard: round(38000 * 0.09) = 3420
-  { id: "e049", vendorId: "v010", category: "Paperwork", amount: 38000, cgst: 3420, sgst: 3420, igst: 0, invoiceNumber: "INC/2025/0415", invoiceFile: "inc_0415.pdf", date: "2025-04-15", description: "INC affiliation renewal fee 2025-26", status: "Pending", submittedBy: "Bikash Sharma", accountBranch: "College Expense", accountSubHead: "College Paperwork", accountLeaf: "WBNC & INC" },
+  // e049 — College Expense / College Paperwork / WBNC & INC — DIRECT PAYMENT (govt fee)
+  { id: "e049", isDirectPayment: true, category: "Paperwork", amount: 38000, cgst: 0, sgst: 0, igst: 0, invoiceNumber: "INC/2025/0415", invoiceFile: "inc_0415.pdf", date: "2025-04-15", description: "INC affiliation renewal fee 2025-26", status: "Pending", submittedBy: "Bikash Sharma", accountBranch: "College Expense", accountSubHead: "College Paperwork", accountLeaf: "WBNC & INC" },
 
-  // e050 — Infrastructure / Building / Construction Work
-  // Building GST: round(320000 * 0.09) = 28800
-  { id: "e050", vendorId: "v010", category: "Construction", amount: 320000, cgst: 28800, sgst: 28800, igst: 0, invoiceNumber: "CONST/2025/0422", invoiceFile: "const_0422.pdf", date: "2025-04-22", description: "Hostel block - 2nd floor slab casting", status: "Pending", submittedBy: "Bikash Sharma", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Construction Work" },
+  // e050 — Infrastructure / Building / Construction Work — vendor: Rajesh Construction
+  { id: "e050", vendorId: "v012", category: "Construction", amount: 320000, cgst: 28800, sgst: 28800, igst: 0, invoiceNumber: "CONST/2025/0422", invoiceFile: "const_0422.pdf", date: "2025-04-22", description: "Hostel block - 2nd floor slab casting", status: "Pending", submittedBy: "Bikash Sharma", accountBranch: "Infrastructure", accountSubHead: "Building", accountLeaf: "Construction Work" },
 ];

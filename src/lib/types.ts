@@ -71,11 +71,13 @@ export interface Vendor {
   email: string;
   category: string;
   paymentTerms: string;
+  accountHeads: string[]; // COA sub-head names this vendor is tagged to e.g. ["College Paperwork", "Purchase"]
 }
 
 export interface Expense {
   id: string;
-  vendorId: string;
+  vendorId?: string;        // optional — undefined for direct payments (salary, govt fees, etc.)
+  isDirectPayment?: boolean;
   category: string;
   amount: number;
   cgst: number;
@@ -89,9 +91,9 @@ export interface Expense {
   submittedBy: string;
   approvedBy?: string;
   remarks?: string;
-  accountBranch?: string;   // e.g. "College Expense"
-  accountSubHead?: string;  // e.g. "College Salary"
-  accountLeaf?: string;     // e.g. "Teacher Salary" (undefined when subHead is leaf)
+  accountBranch?: string;
+  accountSubHead?: string;
+  accountLeaf?: string;
 }
 
 export interface Staff {
