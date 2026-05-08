@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { useNIMSStore } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
-import { Download, RefreshCw, CheckCircle, FileText, Code } from "lucide-react";
+import { Download, RefreshCw, CheckCircle, FileText, Code, TrendingUp, TrendingDown, DollarSign, BarChart2 } from "lucide-react";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from "recharts";
 import { subMonths, startOfMonth, endOfMonth, isWithinInterval, format } from "date-fns";
 
@@ -22,22 +22,14 @@ export default function ReportsPage() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const filteredReceipts = useMemo(() =>
-    receipts.filter(r => {
-      const d = new Date(r.date);
-      return d >= new Date(dateFrom) && d <= new Date(dateTo);
-    }),
+    receipts.filter(r => { const d = new Date(r.date); return d >= new Date(dateFrom) && d <= new Date(dateTo); }),
     [receipts, dateFrom, dateTo]
   );
-
   const filteredExpenses = useMemo(() =>
-    expenses.filter(e => {
-      const d = new Date(e.date);
-      return d >= new Date(dateFrom) && d <= new Date(dateTo);
-    }),
+    expenses.filter(e => { const d = new Date(e.date); return d >= new Date(dateFrom) && d <= new Date(dateTo); }),
     [expenses, dateFrom, dateTo]
   );
 
-  // 12-month data
   const now = new Date();
   const monthlyData = useMemo(() => Array.from({ length: 12 }, (_, i) => {
     const m = subMonths(now, 11 - i);
@@ -47,9 +39,9 @@ export default function ReportsPage() {
     return { month: format(m, "MMM yy"), income, expenses: exp, profit: income - exp };
   }), [receipts, expenses]);
 
-  const totalIncome = filteredReceipts.reduce((s, r) => s + r.totalAmount, 0);
+  const totalIncome   = filteredReceipts.reduce((s, r) => s + r.totalAmount, 0);
   const totalExpenses = filteredExpenses.reduce((s, e) => s + e.amount, 0);
-  const netProfit = totalIncome - totalExpenses;
+  const netProfit     = totalIncome - totalExpenses;
 
   const generateTallyXML = () => {
     const receiptEntries = filteredReceipts.slice(0, 5).map(r => {
@@ -123,20 +115,13 @@ ${expenseEntries}
 
   const handleGenerateTally = () => {
     setGenerating(true);
-    setTimeout(() => {
-      setGenerating(false);
-      setXmlGenerated(true);
-    }, 1500);
+    setTimeout(() => { setGenerating(false); setXmlGenerated(true); }, 1500);
   };
-
   const handleDownloadXML = () => {
     const xml = generateTallyXML();
     const blob = new Blob([xml], { type: "application/xml" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `NIMS_Tally_${dateFrom}_to_${dateTo}.xml`;
-    a.click();
+    const a = document.createElement("a"); a.href = url; a.download = `NIMS_Tally_${dateFrom}_to_${dateTo}.xml`; a.click();
     URL.revokeObjectURL(url);
     setShowSuccessModal(true);
   };
@@ -144,155 +129,163 @@ ${expenseEntries}
   const xmlPreview = useMemo(() => generateTallyXML(), [filteredReceipts, filteredExpenses]);
 
   const tabList: { id: ReportTab; label: string }[] = [
-    { id: "tally", label: "Tally Bridge" },
-    { id: "pnl", label: "P&L" },
-    { id: "cashflow", label: "Cash Flow" },
-    { id: "agedues", label: "Age-wise Dues" },
-    { id: "scholarship", label: "Scholarship Register" },
+    { id: "tally",      label: "Tally Bridge" },
+    { id: "pnl",        label: "P&L" },
+    { id: "cashflow",   label: "Cash Flow" },
+    { id: "agedues",    label: "Age-wise Dues" },
+    { id: "scholarship",label: "Scholarship" },
     { id: "collection", label: "Collection Trend" },
   ];
 
+  const BRANCH_COLORS: Record<string, string> = { "College Expense": "#0F766E", "Infrastructure": "#7C3AED", "Hostel Expense": "#D97706" };
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+
       {/* Tab bar + date range */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex gap-1 bg-white rounded-xl border p-1.5 flex-wrap" style={{ borderColor: "#E2E8F0" }}>
+        <div
+          className="flex gap-1 rounded-2xl border p-1.5 flex-wrap"
+          style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
+        >
           {tabList.map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "text-white" : "hover:bg-gray-50"}`}
-              style={tab === t.id ? { backgroundColor: "#0F766E" } : { color: "#475569" }}>
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={tab === t.id ? { backgroundColor: "#0F766E", color: "#fff" } : { color: "#64748B" }}
+            >
               {t.label}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2">
           <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm outline-none" style={{ borderColor: "#E2E8F0" }} />
-          <span className="text-sm" style={{ color: "#475569" }}>to</span>
+            className="px-3.5 py-2.5 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", backgroundColor: "#fff" }} />
+          <span className="text-sm font-medium" style={{ color: "#94A3B8" }}>to</span>
           <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
-            className="px-3 py-2 rounded-lg border text-sm outline-none" style={{ borderColor: "#E2E8F0" }} />
-          <button onClick={() => toast({ title: "PDF generated (mock)", description: `Report exported for ${dateFrom} – ${dateTo}`, variant: "success" })}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium hover:bg-gray-50 transition-all"
-            style={{ borderColor: "#E2E8F0", color: "#475569" }}>
-            <Download size={14} /> PDF
+            className="px-3.5 py-2.5 rounded-xl border text-sm outline-none" style={{ borderColor: "#E2E8F0", backgroundColor: "#fff" }} />
+          <button
+            onClick={() => toast({ title: "PDF generated (mock)", description: `Report exported for ${dateFrom} – ${dateTo}`, variant: "success" })}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold hover:bg-gray-50 transition-all"
+            style={{ borderColor: "#E2E8F0", color: "#64748B", backgroundColor: "#fff" }}
+          >
+            <Download size={14} /> Export PDF
           </button>
         </div>
       </div>
 
       {/* P&L Tab */}
       {tab === "pnl" && (() => {
-        const BRANCH_COLORS: Record<string, string> = { "College Expense": "#0F766E", "Infrastructure": "#7C3AED", "Hostel Expense": "#D97706" };
-        const BRANCH_BG: Record<string, string> = { "College Expense": "#F0FDFA", "Infrastructure": "#F5F3FF", "Hostel Expense": "#FFFBEB" };
         const branchTotals = ["College Expense", "Infrastructure", "Hostel Expense"].map(b => ({
-          name: b,
-          total: filteredExpenses.filter(e => e.accountBranch === b).reduce((s, e) => s + e.amount, 0),
+          name: b, total: filteredExpenses.filter(e => e.accountBranch === b).reduce((s, e) => s + e.amount, 0),
         }));
         const incomeHeadTotals = [
           { name: "Tuition Fees", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Tuition")).reduce((s, r) => s + r.heads.filter(h => h.head === "Tuition").reduce((a, h) => a + h.amount, 0), 0) },
-          { name: "Hostel Fees", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Hostel")).reduce((s, r) => s + r.heads.filter(h => h.head === "Hostel").reduce((a, h) => a + h.amount, 0), 0) },
-          { name: "Exam & Lab", total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Exam" || h.head === "Lab")).reduce((s, r) => s + r.heads.filter(h => h.head === "Exam" || h.head === "Lab").reduce((a, h) => a + h.amount, 0), 0) },
-          { name: "Other Fees", total: filteredReceipts.filter(r => r.heads.some(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head))).reduce((s, r) => s + r.heads.filter(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head)).reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Hostel Fees",  total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Hostel")).reduce((s, r) => s + r.heads.filter(h => h.head === "Hostel").reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Exam & Lab",   total: filteredReceipts.filter(r => r.heads.some(h => h.head === "Exam" || h.head === "Lab")).reduce((s, r) => s + r.heads.filter(h => h.head === "Exam" || h.head === "Lab").reduce((a, h) => a + h.amount, 0), 0) },
+          { name: "Other Fees",   total: filteredReceipts.filter(r => r.heads.some(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head))).reduce((s, r) => s + r.heads.filter(h => !["Tuition","Hostel","Exam","Lab"].includes(h.head)).reduce((a, h) => a + h.amount, 0), 0) },
         ];
         return (
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { label: "Total Income", value: totalIncome, color: "#0F766E" },
-              { label: "Total Expenses", value: totalExpenses, color: "#F97066" },
-              { label: "Net Surplus", value: netProfit, color: netProfit >= 0 ? "#0F766E" : "#F97066" },
-            ].map(k => (
-              <div key={k.label} className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-                <div className="text-sm mb-2" style={{ color: "#475569" }}>{k.label}</div>
-                <div className="font-serif font-bold text-2xl" style={{ color: k.color }}>{formatINR(k.value)}</div>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-4">
+            {/* KPI Cards */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Total Income", value: totalIncome, gradient: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)", shadow: "rgba(15,118,110,0.35)", Icon: TrendingUp },
+                { label: "Total Expenses", value: totalExpenses, gradient: "linear-gradient(135deg, #E11D48 0%, #F97066 100%)", shadow: "rgba(225,29,72,0.30)", Icon: TrendingDown },
+                { label: "Net Surplus", value: netProfit, gradient: netProfit >= 0 ? "linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)" : "linear-gradient(135deg, #B45309 0%, #F59E0B 100%)", shadow: "rgba(3,105,161,0.30)", Icon: DollarSign },
+              ].map(({ label, value, gradient, shadow, Icon }) => (
+                <div key={label} className="rounded-2xl p-6 text-white relative overflow-hidden" style={{ background: gradient, boxShadow: `0 8px 24px ${shadow}` }}>
+                  <Icon size={72} className="absolute -right-3 -bottom-3 opacity-10" />
+                  <div className="text-white/75 text-xs font-bold uppercase tracking-widest mb-3">{label}</div>
+                  <div className="font-bold text-3xl tracking-tight">{formatINR(value)}</div>
+                  <div className="text-white/60 text-xs mt-2">Selected date range</div>
+                </div>
+              ))}
+            </div>
 
-          {/* Branch-wise Expense Breakdown */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-              <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Expense by Branch</h3>
-              <div className="space-y-3">
-                {branchTotals.map(b => {
-                  const pct = totalExpenses > 0 ? Math.round((b.total / totalExpenses) * 100) : 0;
-                  return (
-                    <div key={b.name}>
-                      <div className="flex justify-between items-center mb-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRANCH_COLORS[b.name] }} />
-                          <span className="text-sm font-medium" style={{ color: "#0F172A" }}>{b.name}</span>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-2xl border p-5" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+                <h3 className="font-serif font-bold text-lg mb-5" style={{ color: "#0F172A" }}>Expense by Branch</h3>
+                <div className="space-y-4">
+                  {branchTotals.map(b => {
+                    const pct = totalExpenses > 0 ? Math.round((b.total / totalExpenses) * 100) : 0;
+                    return (
+                      <div key={b.name}>
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: BRANCH_COLORS[b.name] }} />
+                            <span className="font-semibold text-[15px]" style={{ color: "#0F172A" }}>{b.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-bold text-[15px]" style={{ color: "#0F172A" }}>{formatINR(b.total)}</span>
+                            <span className="text-sm ml-2" style={{ color: "#94A3B8" }}>{pct}%</span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{formatINR(b.total)}</span>
-                          <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>{pct}%</span>
+                        <div className="h-2.5 rounded-full" style={{ backgroundColor: "#F1F5F9" }}>
+                          <div className="h-2.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: BRANCH_COLORS[b.name] }} />
                         </div>
                       </div>
-                      <div className="h-2 rounded-full" style={{ backgroundColor: "#f1f5f9" }}>
-                        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: BRANCH_COLORS[b.name] }} />
+                    );
+                  })}
+                </div>
+              </div>
+              <div className="rounded-2xl border p-5" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+                <h3 className="font-serif font-bold text-lg mb-5" style={{ color: "#0F172A" }}>Income by Head</h3>
+                <div className="space-y-4">
+                  {incomeHeadTotals.filter(h => h.total > 0).map(h => {
+                    const pct = totalIncome > 0 ? Math.round((h.total / totalIncome) * 100) : 0;
+                    return (
+                      <div key={h.name}>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-[15px]" style={{ color: "#0F172A" }}>{h.name}</span>
+                          <div className="text-right">
+                            <span className="font-bold text-[15px]" style={{ color: "#0F172A" }}>{formatINR(h.total)}</span>
+                            <span className="text-sm ml-2" style={{ color: "#94A3B8" }}>{pct}%</span>
+                          </div>
+                        </div>
+                        <div className="h-2.5 rounded-full" style={{ backgroundColor: "#F1F5F9" }}>
+                          <div className="h-2.5 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#0F766E" }} />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            {/* Income head breakdown */}
-            <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-              <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Income by Head</h3>
-              <div className="space-y-3">
-                {incomeHeadTotals.filter(h => h.total > 0).map(h => {
-                  const pct = totalIncome > 0 ? Math.round((h.total / totalIncome) * 100) : 0;
-                  return (
-                    <div key={h.name}>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-sm font-medium" style={{ color: "#0F172A" }}>{h.name}</span>
-                        <div className="text-right">
-                          <span className="text-sm font-semibold" style={{ color: "#0F172A" }}>{formatINR(h.total)}</span>
-                          <span className="text-xs ml-2" style={{ color: "#94a3b8" }}>{pct}%</span>
-                        </div>
-                      </div>
-                      <div className="h-2 rounded-full" style={{ backgroundColor: "#f1f5f9" }}>
-                        <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: "#0F766E" }} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+            <div className="rounded-2xl border p-5" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+              <h3 className="font-serif font-bold text-lg mb-5" style={{ color: "#0F172A" }}>Monthly P&L</h3>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={monthlyData} barGap={4}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+                  <Tooltip formatter={(v) => formatINR(Number(v))} contentStyle={{ borderRadius: 12, fontSize: 13, border: "1px solid #E2E8F0", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }} />
+                  <Legend />
+                  <Bar dataKey="income" fill="#0F766E" radius={[6,6,0,0]} name="Income" />
+                  <Bar dataKey="expenses" fill="#F97066" radius={[6,6,0,0]} name="Expenses" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </div>
-
-          <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-            <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Monthly P&L</h3>
-            <ResponsiveContainer width="100%" height={260}>
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
-                <Tooltip formatter={(v) => formatINR(Number(v))} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                <Legend />
-                <Bar dataKey="income" fill="#0F766E" radius={[4,4,0,0]} name="Income" />
-                <Bar dataKey="expenses" fill="#F97066" radius={[4,4,0,0]} name="Expenses" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
         );
       })()}
 
       {/* Cash Flow */}
       {tab === "cashflow" && (
-        <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-          <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Cash Flow Statement</h3>
-          <ResponsiveContainer width="100%" height={300}>
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+          <h3 className="font-serif font-bold text-xl mb-6" style={{ color: "#0F172A" }}>Cash Flow Statement</h3>
+          <ResponsiveContainer width="100%" height={320}>
             <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
-              <Tooltip formatter={(v) => formatINR(Number(v))} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+              <Tooltip formatter={(v) => formatINR(Number(v))} contentStyle={{ borderRadius: 12, fontSize: 13, border: "1px solid #E2E8F0", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }} />
               <Legend />
-              <Line type="monotone" dataKey="income" stroke="#0F766E" strokeWidth={2.5} dot={false} name="Inflow" />
-              <Line type="monotone" dataKey="expenses" stroke="#F97066" strokeWidth={2.5} dot={false} name="Outflow" />
-              <Line type="monotone" dataKey="profit" stroke="#F59E0B" strokeWidth={2} dot={false} strokeDasharray="5 5" name="Net" />
+              <Line type="monotone" dataKey="income" stroke="#0F766E" strokeWidth={3} dot={false} name="Inflow" />
+              <Line type="monotone" dataKey="expenses" stroke="#F97066" strokeWidth={3} dot={false} name="Outflow" />
+              <Line type="monotone" dataKey="profit" stroke="#F59E0B" strokeWidth={2.5} dot={false} strokeDasharray="6 4" name="Net" />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -300,23 +293,24 @@ ${expenseEntries}
 
       {/* Age-wise Dues */}
       {tab === "agedues" && (
-        <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
-          <div className="px-5 py-4 border-b" style={{ borderColor: "#E2E8F0" }}>
-            <h3 className="font-serif font-semibold" style={{ color: "#0F172A" }}>Age-wise Dues Register</h3>
+        <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+          <div className="px-6 py-5 border-b" style={{ borderColor: "#E2E8F0" }}>
+            <h3 className="font-serif font-bold text-xl" style={{ color: "#0F172A" }}>Age-wise Dues Register</h3>
+            <p className="text-sm mt-1" style={{ color: "#64748B" }}>Outstanding balances bucketed by overdue days</p>
           </div>
-          <table className="w-full text-sm">
+          <table className="w-full">
             <thead>
-              <tr style={{ backgroundColor: "#f8fafc" }}>
-                <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Student</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold uppercase" style={{ color: "#F59E0B" }}>0-30d</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold uppercase" style={{ color: "#F97066" }}>31-60d</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold uppercase" style={{ color: "#ef4444" }}>61-90d</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold uppercase" style={{ color: "#dc2626" }}>90+d</th>
-                <th className="text-right px-5 py-3 text-xs font-semibold uppercase" style={{ color: "#475569" }}>Total</th>
+              <tr style={{ backgroundColor: "#F8FAFC", borderBottom: "2px solid #E2E8F0" }}>
+                <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>Student</th>
+                <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#F59E0B" }}>0–30 days</th>
+                <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#F97066" }}>31–60 days</th>
+                <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#EF4444" }}>61–90 days</th>
+                <th className="text-right px-4 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#DC2626" }}>90+ days</th>
+                <th className="text-right px-6 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>Total Due</th>
               </tr>
             </thead>
             <tbody>
-              {defaulters.map(d => {
+              {defaulters.map((d, idx) => {
                 const s = students.find(x => x.id === d.studentId);
                 const buckets = { b0: 0, b31: 0, b61: 0, b90: 0 };
                 if (d.overdueDays <= 30) buckets.b0 = d.overdueAmount;
@@ -324,16 +318,20 @@ ${expenseEntries}
                 else if (d.overdueDays <= 90) buckets.b61 = d.overdueAmount;
                 else buckets.b90 = d.overdueAmount;
                 return (
-                  <tr key={d.studentId} className="border-t hover:bg-gray-50" style={{ borderColor: "#f1f5f9" }}>
-                    <td className="px-5 py-3">
-                      <div className="font-medium" style={{ color: "#0F172A" }}>{s?.name}</div>
-                      <div className="text-xs" style={{ color: "#475569" }}>{s?.course} · Yr {s?.year}</div>
+                  <tr key={d.studentId} className="transition-colors"
+                    style={{ borderBottom: "1px solid #F1F5F9", backgroundColor: idx % 2 === 0 ? "#fff" : "#FAFBFC" }}
+                    onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#F0FDFA")}
+                    onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#FAFBFC")}>
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-[15px]" style={{ color: "#0F172A" }}>{s?.name}</div>
+                      <div className="text-sm" style={{ color: "#94A3B8" }}>{s?.course} · Year {s?.year}</div>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm">{buckets.b0 > 0 ? formatINR(buckets.b0) : "—"}</td>
-                    <td className="px-4 py-3 text-right text-sm">{buckets.b31 > 0 ? formatINR(buckets.b31) : "—"}</td>
-                    <td className="px-4 py-3 text-right text-sm">{buckets.b61 > 0 ? formatINR(buckets.b61) : "—"}</td>
-                    <td className="px-4 py-3 text-right text-sm">{buckets.b90 > 0 ? formatINR(buckets.b90) : "—"}</td>
-                    <td className="px-5 py-3 text-right font-bold" style={{ color: "#F97066" }}>{formatINR(d.overdueAmount)}</td>
+                    {[buckets.b0, buckets.b31, buckets.b61, buckets.b90].map((v, i) => (
+                      <td key={i} className="px-4 py-4 text-right text-[15px] font-medium" style={{ color: v > 0 ? "#0F172A" : "#CBD5E1" }}>
+                        {v > 0 ? formatINR(v) : "—"}
+                      </td>
+                    ))}
+                    <td className="px-6 py-4 text-right font-bold text-base" style={{ color: "#E11D48" }}>{formatINR(d.overdueAmount)}</td>
                   </tr>
                 );
               })}
@@ -353,36 +351,45 @@ ${expenseEntries}
                 if (st?.category !== cat) return sum;
                 return sum + r.heads.reduce((s, h) => s + (h.scholarship || 0), 0);
               }, 0);
+              const gradients: Record<string, string> = { SC: "linear-gradient(135deg, #1D4ED8 0%, #60A5FA 100%)", ST: "linear-gradient(135deg, #6D28D9 0%, #A78BFA 100%)", OBC: "linear-gradient(135deg, #B45309 0%, #F59E0B 100%)" };
               return (
-                <div key={cat} className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-                  <div className="text-sm" style={{ color: "#475569" }}>{cat} Scholarship</div>
-                  <div className="font-bold text-xl mt-1" style={{ color: "#0F766E" }}>{formatINR(total)}</div>
-                  <div className="text-xs mt-1" style={{ color: "#475569" }}>{count} students</div>
+                <div key={cat} className="rounded-2xl p-6 text-white relative overflow-hidden" style={{ background: gradients[cat], boxShadow: "0 6px 20px rgba(0,0,0,0.15)" }}>
+                  <BarChart2 size={64} className="absolute -right-3 -bottom-3 opacity-10" />
+                  <div className="text-white/75 text-xs font-bold uppercase tracking-widest mb-3">{cat} Scholarship</div>
+                  <div className="font-bold text-3xl tracking-tight">{formatINR(total)}</div>
+                  <div className="text-white/60 text-xs mt-2">{count} students</div>
                 </div>
               );
             })}
           </div>
-          <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
-            <table className="w-full text-sm">
+          <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+            <table className="w-full">
               <thead>
-                <tr style={{ backgroundColor: "#f8fafc" }}>
-                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Student</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Category</th>
-                  <th className="text-right px-5 py-3 text-xs font-semibold uppercase tracking-wide" style={{ color: "#475569" }}>Scholarship Amount</th>
+                <tr style={{ backgroundColor: "#F8FAFC", borderBottom: "2px solid #E2E8F0" }}>
+                  <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>Student</th>
+                  <th className="text-left px-4 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>Category</th>
+                  <th className="text-right px-6 py-4 text-xs font-bold uppercase tracking-widest" style={{ color: "#94A3B8" }}>Scholarship Amount</th>
                 </tr>
               </thead>
               <tbody>
-                {students.filter(s => ["SC","ST","OBC","EWS"].includes(s.category)).map(s => {
+                {students.filter(s => ["SC","ST","OBC","EWS"].includes(s.category)).map((s, idx) => {
                   const schAmount = receipts.filter(r => r.studentId === s.id).reduce((sum, r) =>
                     sum + r.heads.reduce((ss, h) => ss + (h.scholarship || 0), 0), 0);
                   if (schAmount === 0) return null;
+                  const catColors: Record<string, string> = { SC: "#1D4ED8", ST: "#6D28D9", OBC: "#B45309", EWS: "#15803D" };
                   return (
-                    <tr key={s.id} className="border-t hover:bg-gray-50" style={{ borderColor: "#f1f5f9" }}>
-                      <td className="px-5 py-3 font-medium" style={{ color: "#0F172A" }}>{s.name}</td>
-                      <td className="px-5 py-3">
-                        <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700">{s.category}</span>
+                    <tr key={s.id} className="transition-colors"
+                      style={{ borderBottom: "1px solid #F1F5F9", backgroundColor: idx % 2 === 0 ? "#fff" : "#FAFBFC" }}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#F0FDFA")}
+                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = idx % 2 === 0 ? "#fff" : "#FAFBFC")}>
+                      <td className="px-6 py-4 font-semibold text-[15px]" style={{ color: "#0F172A" }}>{s.name}</td>
+                      <td className="px-4 py-4">
+                        <span className="text-xs px-2.5 py-1 rounded-lg font-bold"
+                          style={{ backgroundColor: `${catColors[s.category]}18`, color: catColors[s.category] }}>
+                          {s.category}
+                        </span>
                       </td>
-                      <td className="px-5 py-3 text-right font-semibold" style={{ color: "#0F766E" }}>{formatINR(schAmount)}</td>
+                      <td className="px-6 py-4 text-right font-bold text-base" style={{ color: "#0F766E" }}>{formatINR(schAmount)}</td>
                     </tr>
                   );
                 })}
@@ -394,15 +401,15 @@ ${expenseEntries}
 
       {/* Collection Trend */}
       {tab === "collection" && (
-        <div className="bg-white rounded-xl border p-5" style={{ borderColor: "#E2E8F0" }}>
-          <h3 className="font-serif font-semibold mb-4" style={{ color: "#0F172A" }}>Fee Collection Trend</h3>
-          <ResponsiveContainer width="100%" height={320}>
+        <div className="rounded-2xl border p-6" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+          <h3 className="font-serif font-bold text-xl mb-6" style={{ color: "#0F172A" }}>Fee Collection Trend</h3>
+          <ResponsiveContainer width="100%" height={340}>
             <BarChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
-              <Tooltip formatter={(v) => [formatINR(Number(v)), "Collected"]} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-              <Bar dataKey="income" fill="#0F766E" radius={[4,4,0,0]} name="Fee Collection" />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: "#94A3B8" }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+              <Tooltip formatter={(v) => [formatINR(Number(v)), "Collected"]} contentStyle={{ borderRadius: 12, fontSize: 13, border: "1px solid #E2E8F0", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }} />
+              <Bar dataKey="income" fill="#0F766E" radius={[6,6,0,0]} name="Fee Collection" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -411,73 +418,67 @@ ${expenseEntries}
       {/* Tally Bridge */}
       {tab === "tally" && (
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border p-6" style={{ borderColor: "#E2E8F0" }}>
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#F0FDFA" }}>
-                <Code size={22} style={{ color: "#0F766E" }} />
+          <div className="rounded-2xl border p-6" style={{ backgroundColor: "#fff", borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+            <div className="flex items-start gap-5">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
+                style={{ background: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)", boxShadow: "0 4px 12px rgba(15,118,110,0.35)" }}
+              >
+                <Code size={24} style={{ color: "#fff" }} />
               </div>
               <div className="flex-1">
-                <h3 className="font-serif font-bold text-lg" style={{ color: "#0F172A" }}>Tally Bridge</h3>
-                <p className="text-sm mt-1" style={{ color: "#475569" }}>
-                  Generate a Tally XML file containing all fee receipts and expenses for the selected date range.
-                  Import directly into Tally Prime or Busy.
+                <h3 className="font-serif font-bold text-xl" style={{ color: "#0F172A" }}>Tally Bridge</h3>
+                <p className="text-base mt-1.5" style={{ color: "#64748B" }}>
+                  Generate a Tally XML file containing all fee receipts and expenses. Import directly into Tally Prime or Busy.
                 </p>
-                <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-                  <div className="p-3 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
-                    <div className="text-xs" style={{ color: "#475569" }}>Receipts in range</div>
-                    <div className="font-bold mt-0.5" style={{ color: "#0F172A" }}>{filteredReceipts.length}</div>
-                  </div>
-                  <div className="p-3 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
-                    <div className="text-xs" style={{ color: "#475569" }}>Expenses in range</div>
-                    <div className="font-bold mt-0.5" style={{ color: "#0F172A" }}>{filteredExpenses.length}</div>
-                  </div>
-                  <div className="p-3 rounded-xl" style={{ backgroundColor: "#f8fafc" }}>
-                    <div className="text-xs" style={{ color: "#475569" }}>Net value</div>
-                    <div className="font-bold mt-0.5" style={{ color: "#0F766E" }}>{formatINR(totalIncome - totalExpenses)}</div>
-                  </div>
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  {[
+                    { label: "Receipts in range", value: filteredReceipts.length },
+                    { label: "Expenses in range", value: filteredExpenses.length },
+                    { label: "Net value", value: formatINR(totalIncome - totalExpenses), isAmount: true },
+                  ].map(({ label, value, isAmount }) => (
+                    <div key={label} className="p-4 rounded-xl border" style={{ borderColor: "#E2E8F0", backgroundColor: "#F8FAFC" }}>
+                      <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: "#94A3B8" }}>{label}</div>
+                      <div className="font-bold text-xl" style={{ color: isAmount ? "#0F766E" : "#0F172A" }}>{value}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <button
                 onClick={handleGenerateTally}
                 disabled={generating}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white font-medium hover:opacity-90 transition-all disabled:opacity-70 flex-shrink-0"
-                style={{ backgroundColor: "#0F766E" }}>
-                {generating ? <><RefreshCw size={16} className="animate-spin" /> Generating...</> : <><Code size={16} /> Generate Tally XML</>}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-all disabled:opacity-70 flex-shrink-0"
+                style={{ backgroundColor: "#0F766E", boxShadow: "0 4px 12px rgba(15,118,110,0.35)" }}
+              >
+                {generating ? <><RefreshCw size={16} className="animate-spin" /> Generating…</> : <><Code size={16} /> Generate XML</>}
               </button>
             </div>
           </div>
 
-          {/* XML Preview */}
           {xmlGenerated && (
-            <div className="bg-white rounded-xl border overflow-hidden" style={{ borderColor: "#E2E8F0" }}>
-              <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "#E2E8F0", backgroundColor: "#0B3D3A" }}>
-                <div className="flex items-center gap-2">
-                  <FileText size={15} className="text-teal-300" />
+            <div className="rounded-2xl border overflow-hidden" style={{ borderColor: "#E2E8F0", boxShadow: "0 1px 8px rgba(0,0,0,0.06)" }}>
+              <div className="px-6 py-4 flex items-center justify-between" style={{ backgroundColor: "#0B3D3A" }}>
+                <div className="flex items-center gap-2.5">
+                  <FileText size={16} style={{ color: "#5EEAD4" }} />
                   <span className="text-sm font-mono font-medium text-white">NIMS_Tally_{dateFrom}_to_{dateTo}.xml</span>
                 </div>
-                <button onClick={handleDownloadXML}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all hover:opacity-90"
-                  style={{ backgroundColor: "#F59E0B", color: "white" }}>
+                <button
+                  onClick={handleDownloadXML}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-90"
+                  style={{ backgroundColor: "#F59E0B", color: "white" }}
+                >
                   <Download size={14} /> Download XML
                 </button>
               </div>
-              <div className="overflow-auto max-h-96 p-4" style={{ backgroundColor: "#0F172A" }}>
+              <div className="overflow-auto max-h-96 p-5" style={{ backgroundColor: "#0F172A" }}>
                 <pre className="text-xs leading-relaxed whitespace-pre">
                   {xmlPreview.split("\n").map((line, i) => {
-                    const isTag = line.trim().startsWith("<");
-                    const isComment = line.trim().startsWith("<!--");
-
                     let color = "#e2e8f0";
-                    if (isComment) color = "#64748b";
+                    if (line.trim().startsWith("<!--")) color = "#64748b";
                     else if (line.includes("TALLYMESSAGE") || line.includes("VOUCHER ") || line.includes("ENVELOPE") || line.includes("BODY") || line.includes("IMPORTDATA")) color = "#5EEAD4";
-                    else if (isTag) color = "#93c5fd";
-                    else if (!isTag && line.trim()) color = "#fde68a";
-
-                    return (
-                      <span key={i} style={{ color }} className="block">
-                        {line}
-                      </span>
-                    );
+                    else if (line.trim().startsWith("<")) color = "#93c5fd";
+                    else if (line.trim()) color = "#fde68a";
+                    return <span key={i} style={{ color }} className="block">{line}</span>;
                   })}
                 </pre>
               </div>
@@ -488,27 +489,28 @@ ${expenseEntries}
 
       {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
-            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#F0FDFA" }}>
-              <CheckCircle size={32} style={{ color: "#0F766E" }} />
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
+          <div className="rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center" style={{ backgroundColor: "#fff" }}>
+            <div
+              className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5"
+              style={{ background: "linear-gradient(135deg, #0F766E 0%, #14B8A6 100%)", boxShadow: "0 6px 20px rgba(15,118,110,0.40)" }}
+            >
+              <CheckCircle size={36} style={{ color: "#fff" }} />
             </div>
-            <h3 className="font-serif font-bold text-xl mb-2" style={{ color: "#0F172A" }}>XML Ready!</h3>
-            <p className="text-sm mb-2" style={{ color: "#475569" }}>
-              Your Tally XML file has been downloaded successfully.
-            </p>
-            <p className="text-sm font-medium" style={{ color: "#0F766E" }}>
-              Ready to import in Tally Prime / Busy
-            </p>
-            <div className="mt-5 p-3 rounded-xl text-xs text-left space-y-1.5" style={{ backgroundColor: "#f8fafc", color: "#475569" }}>
+            <h3 className="font-serif font-bold text-2xl mb-2" style={{ color: "#0F172A" }}>XML Ready!</h3>
+            <p className="text-base mb-2" style={{ color: "#475569" }}>Your Tally XML has been downloaded.</p>
+            <p className="font-semibold text-base" style={{ color: "#0F766E" }}>Ready to import in Tally Prime / Busy</p>
+            <div className="mt-5 p-4 rounded-xl text-sm text-left space-y-2" style={{ backgroundColor: "#F8FAFC", color: "#475569" }}>
               <div>① Open Tally Prime → Gateway of Tally</div>
               <div>② Import → From XML File</div>
               <div>③ Select the downloaded file</div>
               <div>④ Review and confirm import</div>
             </div>
-            <button onClick={() => setShowSuccessModal(false)}
-              className="mt-5 w-full py-2.5 rounded-xl text-white font-medium hover:opacity-90 transition-all"
-              style={{ backgroundColor: "#0F766E" }}>
+            <button
+              onClick={() => setShowSuccessModal(false)}
+              className="mt-5 w-full py-3 rounded-xl text-white font-semibold hover:opacity-90 transition-all"
+              style={{ backgroundColor: "#0F766E" }}
+            >
               Done
             </button>
           </div>
