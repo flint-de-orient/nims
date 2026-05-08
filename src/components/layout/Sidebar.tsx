@@ -6,7 +6,7 @@ import type { Role } from "@/lib/types";
 import {
   LayoutDashboard, DollarSign, Users, BookOpen, GraduationCap,
   FileText, ShoppingCart, BarChart3, UserCheck, Calendar,
-  ClipboardList, LogOut, ChevronRight, GitBranch
+  ClipboardList, LogOut, ChevronRight, GitBranch, Landmark
 } from "lucide-react";
 
 interface NavItem {
@@ -30,7 +30,8 @@ const navItems: NavItem[] = [
       { label: "New Receipt", href: "/finance/receipt/new", icon: <ClipboardList size={16} />, roles: ["Principal", "Accountant"] },
       { label: "Vendors & Expenses", href: "/finance/expenses", icon: <ShoppingCart size={16} />, roles: ["Principal", "Accountant"] },
       { label: "Chart of Accounts", href: "/finance/chart-of-accounts", icon: <GitBranch size={16} />, roles: ["Principal", "Accountant"] },
-      { label: "Reports & Tally", href: "/finance/reports", icon: <BarChart3 size={16} />, roles: ["Principal", "Accountant"] },
+      { label: "Loan Management",   href: "/finance/loans",             icon: <Landmark size={16} />, roles: ["Principal", "Accountant"] },
+      { label: "Reports & Tally",   href: "/finance/reports",           icon: <BarChart3 size={16} />, roles: ["Principal", "Accountant"] },
     ],
   },
   {

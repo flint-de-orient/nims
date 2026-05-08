@@ -96,6 +96,40 @@ export interface Expense {
   accountLeaf?: string;
 }
 
+export type LoanStatus = "Active" | "Overdue" | "Closed";
+export type LenderType = "Trustee" | "Committee Member" | "Individual" | "Other";
+export type RepaymentStatus = "Upcoming" | "Paid" | "Overdue" | "Partial";
+
+export interface Loan {
+  id: string;
+  lenderName: string;
+  lenderType: LenderType;
+  relationship: string;
+  phone?: string;
+  amount: number;
+  dateReceived: string;
+  purpose: string;
+  interestRate: number;     // % per annum; 0 = interest-free
+  tenureMonths: number;
+  repaymentStartDate: string;
+  status: LoanStatus;
+  notes?: string;
+}
+
+export interface LoanRepayment {
+  id: string;
+  loanId: string;
+  installmentNo: number;
+  dueDate: string;
+  principalDue: number;
+  interestDue: number;
+  paidDate?: string;
+  paidAmount?: number;
+  paymentMode?: PaymentMode;
+  referenceNumber?: string;
+  status: RepaymentStatus;
+}
+
 export interface Staff {
   id: string;
   name: string;

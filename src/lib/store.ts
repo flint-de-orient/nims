@@ -5,9 +5,10 @@ import { mockFeeStructures, mockScholarshipRules, defaultLateFeeRule } from "./m
 import { mockVendors } from "./mock-data/vendors";
 import { mockExpenses } from "./mock-data/expenses";
 import { mockReceipts, defaultersConfig } from "./mock-data/receipts";
+import { mockLoans, mockLoanRepayments } from "./mock-data/loans";
 import type {
   Role, Student, FeeStructure, ScholarshipRule, LateFeeRule,
-  Receipt, Vendor, Expense, Staff
+  Receipt, Vendor, Expense, Staff, Loan, LoanRepayment, PaymentMode
 } from "./types";
 
 interface AuthSlice {
@@ -53,7 +54,14 @@ interface StaffSlice {
   staff: Staff[];
 }
 
-type NIMSStore = AuthSlice & StudentsSlice & FeesSlice & ReceiptsSlice & VendorsSlice & ExpensesSlice & StaffSlice & {
+interface LoansSlice {
+  loans: Loan[];
+  loanRepayments: LoanRepayment[];
+  addLoan: (loan: Omit<Loan, "id">) => void;
+  recordPayment: (repaymentId: string, paidAmount: number, paidDate: string, paymentMode: PaymentMode, referenceNumber?: string) => void;
+}
+
+type NIMSStore = AuthSlice & StudentsSlice & FeesSlice & ReceiptsSlice & VendorsSlice & ExpensesSlice & StaffSlice & LoansSlice & {
   defaulters: typeof defaultersConfig;
 };
 
@@ -125,6 +133,53 @@ export const useNIMSStore = create<NIMSStore>((set) => ({
 
   // Staff
   staff: mockStaff,
+
+  // Loans
+  loans: mockLoans,
+  loanRepayments: mockLoanRepayments,
+
+  addLoan: (loanData) => {
+    const loanId = `loan-${Date.now()}`;
+    const loan: Loan = { id: loanId, ...loanData };
+    const base = Math.floor(loanData.amount / loanData.tenureMonths);
+    const today = new Date().toISOString().split("T")[0];
+    const repayments: LoanRepayment[] = Array.from({ length: loanData.tenureMonths }, (_, i) => {
+      const [y, m, d] = loanData.repaymentStartDate.split("-").map(Number);
+      const total = y * 12 + (m - 1) + i;
+      const dueDate = `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const principal = i === loanData.tenureMonths - 1 ? loanData.amount - base * (loanData.tenureMonths - 1) : base;
+      return {
+        id: `${loanId}-r${i + 1}`,
+        loanId,
+        installmentNo: i + 1,
+        dueDate,
+        principalDue: principal,
+        interestDue: Math.round(loanData.amount * loanData.interestRate / 100 / 12),
+        status: dueDate < today ? "Overdue" : "Upcoming",
+      };
+    });
+    set((state) => ({ loans: [...state.loans, loan], loanRepayments: [...state.loanRepayments, ...repayments] }));
+  },
+
+  recordPayment: (repaymentId, paidAmount, paidDate, paymentMode, referenceNumber) =>
+    set((state) => {
+      const repayment = state.loanRepayments.find(r => r.id === repaymentId);
+      if (!repayment) return state;
+      const updatedRepayments = state.loanRepayments.map(r =>
+        r.id === repaymentId
+          ? { ...r, paidDate, paidAmount, paymentMode, referenceNumber, status: paidAmount >= r.principalDue + r.interestDue ? "Paid" : "Partial" as LoanRepayment["status"] }
+          : r
+      );
+      const loanInstallments = updatedRepayments.filter(r => r.loanId === repayment.loanId);
+      const allPaid = loanInstallments.every(r => r.status === "Paid");
+      const hasOverdue = loanInstallments.some(r => r.status === "Overdue");
+      const updatedLoans = state.loans.map(l =>
+        l.id === repayment.loanId
+          ? { ...l, status: allPaid ? "Closed" : hasOverdue ? "Overdue" : "Active" as Loan["status"] }
+          : l
+      );
+      return { loanRepayments: updatedRepayments, loans: updatedLoans };
+    }),
 
   // Defaulters config
   defaulters: defaultersConfig,

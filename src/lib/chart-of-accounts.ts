@@ -181,11 +181,6 @@ export const INCOME_HEADS: { id: string; name: string; note: string }[] = [
     name: "Hostel Monthly Fees",
     note: "Monthly recurring charges covering boarding, lodging, and mess for hostel residents.",
   },
-  {
-    id: "loan-from-other-person",
-    name: "Loan from Other Person",
-    note: "Short-term borrowings or interest-free loans from trustees, committee members, or other individuals.",
-  },
 ];
 
 export const APPROVAL_THRESHOLDS = {
