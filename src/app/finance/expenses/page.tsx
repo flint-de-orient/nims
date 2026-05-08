@@ -4,8 +4,9 @@ import { useNIMSStore } from "@/lib/store";
 import { formatINR, formatDate } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
 import { CHART_OF_ACCOUNTS, APPROVAL_THRESHOLDS } from "@/lib/chart-of-accounts";
-import { Plus, Building2, CheckCircle, XCircle, Clock, Banknote, ShieldCheck, ShieldAlert, Users, Wallet } from "lucide-react";
+import { Plus, Building2, CheckCircle, XCircle, Clock, Banknote, ShieldCheck, ShieldAlert, Users, Wallet, ChevronRight } from "lucide-react";
 import type { Expense, ExpenseStatus } from "@/lib/types";
+import VendorLedger from "./VendorLedger";
 
 type TabType = "vendors" | "expenses" | "pending";
 
@@ -14,6 +15,7 @@ export default function ExpensesPage() {
   const { toast } = useToast();
 
   const [tab, setTab] = useState<TabType>("expenses");
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
   const [showVendorModal, setShowVendorModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ExpenseStatus | "all">("all");
@@ -221,16 +223,19 @@ export default function ExpensesPage() {
             </thead>
             <tbody>
               {vendors.map(v => (
-                <tr key={v.id} className="border-t hover:bg-gray-50 transition-colors" style={{ borderColor: "#f1f5f9" }}>
+                <tr key={v.id}
+                  onClick={() => setSelectedVendorId(v.id)}
+                  className="border-t hover:bg-teal-50 transition-colors cursor-pointer group" style={{ borderColor: "#f1f5f9" }}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#F0FDFA" }}>
                         <Building2 size={14} style={{ color: "#0F766E" }} />
                       </div>
                       <div>
-                        <div className="font-medium" style={{ color: "#0F172A" }}>{v.name}</div>
+                        <div className="font-medium group-hover:underline" style={{ color: "#0F172A" }}>{v.name}</div>
                         <div className="text-xs truncate max-w-40" style={{ color: "#475569" }}>{v.contact}</div>
                       </div>
+                      <ChevronRight size={14} className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: "#0F766E" }} />
                     </div>
                   </td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: "#475569" }}>{v.gstin}</td>
@@ -523,6 +528,18 @@ export default function ExpensesPage() {
           </div>
         </div>
       )}
+
+      {/* Vendor Ledger slide-over */}
+      {selectedVendorId && (() => {
+        const v = vendors.find(x => x.id === selectedVendorId);
+        return v ? (
+          <VendorLedger
+            vendor={v}
+            expenses={expenses}
+            onClose={() => setSelectedVendorId(null)}
+          />
+        ) : null;
+      })()}
 
       {/* New Expense Modal — COA-driven */}
       {showExpenseModal && (
