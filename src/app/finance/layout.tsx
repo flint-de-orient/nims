@@ -9,6 +9,8 @@ const PAGE_TITLES: Record<string, string> = {
   "/finance/receipt/new": "New Receipt",
   "/finance/expenses": "Vendors & Expenses",
   "/finance/reports": "Reports & Tally Bridge",
+  "/finance/chart-of-accounts": "Chart of Accounts",
+  "/finance/loans": "Loan Management",
 };
 
 export default function FinanceLayout({ children }: { children: React.ReactNode }) {

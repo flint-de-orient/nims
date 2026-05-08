@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&family=Playfair+Display:wght@600;700&display=swap');
 
 :root {
   --primary: #0F766E;
@@ -18,12 +19,28 @@
 
 body {
   color: var(--text);
-  background: #f8fafc;
-  font-family: system-ui, -apple-system, sans-serif;
+  background: #EEF2F0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4 {
   font-family: Georgia, "Source Serif Pro", serif;
+}
+
+::selection {
+  background: rgba(15, 118, 110, 0.18);
+  color: #0B3D3A;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out both;
 }
 
 @media print {
@@ -56,4 +73,7 @@ h1, h2, h3, h4 {
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

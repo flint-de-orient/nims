@@ -10,10 +10,13 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children, title, breadcrumbs }: DashboardLayoutProps) {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#f8fafc" }}>
+    <div className="min-h-screen" style={{ backgroundColor: "#EEF2F0" }}>
       <Sidebar />
       <TopBar title={title} breadcrumbs={breadcrumbs} />
-      <main className="pt-14 pl-64 min-h-screen">
+      <main
+        className="min-h-screen"
+        style={{ paddingTop: "64px", paddingLeft: "256px" }}
+      >
         <div className="p-6">{children}</div>
       </main>
     </div>
